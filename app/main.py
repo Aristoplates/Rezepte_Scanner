@@ -1,5 +1,5 @@
 def main():
-    print("Hello from rezepte-scanner!")
+    print("Hallo vom Rezepte-Scanner!")
 
 
 if __name__ == "__main__":
