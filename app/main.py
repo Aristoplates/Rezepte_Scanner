@@ -113,7 +113,7 @@ with st.sidebar:
 
 
 # --- Main UI ------------------------------------------------------------
-st.markdown("# 🍳 Recipe Scanner")
+st.markdown("# 🍳 Rezepte Scanner")
 st.markdown("*Rezeptfoto hochladen → KI liest aus → In Notion speichern*")
 
 st.divider()
