@@ -50,6 +50,20 @@ class NotionService:
                 "rich_text": [{"text": {"content": recipe.source}}]
             }
 
+         # Zutaten als Rich Text Property (max 2000 Zeichen — Notion-Limit)
+        if recipe.ingredients:
+            ingredients_text = self._format_ingredients(recipe.ingredients)
+            properties["Zutaten"] = {
+                "rich_text": [{"text": {"content": ingredients_text[:2000]}}]
+            }
+
+        # Zubereitung als Rich Text Property
+        if recipe.instructions:
+            instructions_text = self._format_instructions(recipe.instructions)
+            properties["Zubereitung"] = {
+                "rich_text": [{"text": {"content": instructions_text[:2000]}}]
+            }
+
         # Build page children (body blocks)
         children = []
 

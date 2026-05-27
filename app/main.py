@@ -1,4 +1,11 @@
 import os
+import sys
+from pathlib import Path
+
+# Ensure the project root is on sys.path so absolute imports from `app` work
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -150,7 +157,7 @@ if image_bytes and st.button("🔍 Rezept auslesen", type="primary", use_contain
             st.stop()
 
 # --- Edit & Review -------------------------------------------
-if recipe in st.session_state:
+if "recipe" in st.session_state:
     recipe: Recipe = st.session_state["recipe"]
 
     st.markdown("## 📋 Erkanntes Rezept")

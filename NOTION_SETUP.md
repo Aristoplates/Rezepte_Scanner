@@ -20,6 +20,8 @@ Erstelle eine neue Notion-Datenbank (Full page) mit folgenden Properties:
 | `Kochzeit`        | Text          |                                  |
 | `Gesamtzeit`      | Text          |                                  |
 | `Tags`            | Multi-select  | z.B. Vegetarisch, Kuchen, etc.   |
+| `Zutaten`         | Text          | Zutaten-Liste (max 2000 Zeichen) |
+| `Zubereitung`     | Text          | Zubereitungsschritte             |
 | `Quelle`          | Text          |                                  |
 
 ## 3. Integration mit DB verbinden
