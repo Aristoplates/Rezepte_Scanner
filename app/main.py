@@ -105,7 +105,7 @@ with st.sidebar:
 
     st.divider()
     st.markdown("### LangSmith Tracing")
-    tracing = os.getenv("LANGCHAIN_TRACING_V2", "false")
+    tracing = os.getenv("LANGCHAIN_TRACING_V2", "false") or st.secrets["LANGCHAIN_TRACING_V2", "false"]
     if tracing == "true":
         st.success("✅ Aktiv")
     else:
