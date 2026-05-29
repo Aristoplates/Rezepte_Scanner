@@ -1,5 +1,6 @@
 import base64
 import os
+import streamlit as st
 from pathlib import Path
 from typing import Union
 
@@ -49,7 +50,7 @@ def build_recipe_chain(use_ollama: bool = False):
     else:
         llm = ChatOpenAI(
             model="gpt-4o",
-            api_key=os.getenv("OPENAI_API_KEY"),
+            api_key=os.getenv("OPENAI_API_KEY") or st.secrets["OPENAI_API_KEY"],
             max_tokens=4096,
         )
 

@@ -1,11 +1,12 @@
 import os
+import streamlit as st
 from notion_client import Client
 from app.models.recipe import Recipe
 
 class NotionService:
     def __init__(self):
-        self.client = Client(auth=os.getenv("NOTION_API_KEY"))
-        self.database_id = os.getenv("NOTION_DATABASE_ID")
+        self.client = Client(auth=os.getenv("NOTION_API_KEY")) or Client(auth=st.secrets["NOTION_API_KEY"])
+        self.database_id = os.getenv("NOTION_DATABASE_ID") or st.secrets["NOTION_DATABASE_ID"]
 
     def create_recipe_page(self, recipe: Recipe, image_bytes: bytes | None = None) -> dict:
         """
