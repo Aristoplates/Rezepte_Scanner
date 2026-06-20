@@ -84,7 +84,7 @@ with st.sidebar:
     use_ollama = st.toggle("Ollama (lokal)", value=False, help="Nutzt qwen statt GPT-4o")
 
     if use_ollama:
-        st.info("🦙 Ollama aktiv — kein API-Cost")
+        st.info("🦙 Ollama aktiv — keine API-Kosten")
         ollama_model = st.text_input("Modell", value=os.getenv("OLLAMA_MODEL", "qwen3.5:0.8b"))
         os.environ["OLLAMA_MODEL"] = ollama_model
     else:
