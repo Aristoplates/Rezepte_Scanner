@@ -33,26 +33,29 @@ def _encode_image(image_input: Union[str, bytes]) -> tuple[str, str]:
     return base64.b64encode(data).decode("utf-8"), media_type
 
 
+def _build_llm(use_ollama: bool = False):
+    """Erzeuge das LLM (lokales Ollama oder OpenAI GPT-4o)."""
+    if use_ollama:
+        return ChatOllama(
+            model=os.getenv("OLLAMA_MODEL", "qwen3.5:0.8b"),
+            base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+        )
+    return ChatOpenAI(
+        model="gpt-4o",
+        api_key=os.getenv("OPENAI_API_KEY") or st.secrets["OPENAI_API_KEY"],
+        max_tokens=4096,
+    )
+
+
 def build_recipe_chain(use_ollama: bool = False):
     """
     Build a LangChain chain for recipe extraction from images.
-    
+
     Args:
         use_ollama: If True, use local Ollama (qwen3.5:0.8b model). Otherwise use OpenAI GPT-4o.
     """
     parser = PydanticOutputParser(pydantic_object=Recipe)
-
-    if use_ollama:
-        llm = ChatOllama(
-            model=os.getenv("OLLAMA_MODEL", "qwen3.5:0.8b"),
-            base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
-        )
-    else:
-        llm = ChatOpenAI(
-            model="gpt-4o",
-            api_key=os.getenv("OPENAI_API_KEY") or st.secrets["OPENAI_API_KEY"],
-            max_tokens=4096,
-        )
+    llm = _build_llm(use_ollama)
 
     def extract_recipe(image_input: Union[str, bytes]) -> Recipe:
         """Extract recipe data from an image."""
@@ -90,5 +93,52 @@ Antworte NUR mit dem JSON-Objekt, ohne zusätzlichen Text.""",
 
         response = llm.invoke([message])
         return parser.parse(response.content)
-    
+
     return extract_recipe
+
+
+def build_recipe_url_chain(use_ollama: bool = False):
+    """
+    Build a LangChain chain for recipe extraction from web page text.
+
+    Wird als Fallback genutzt, wenn eine Seite keine strukturierten
+    JSON-LD-Rezeptdaten enthält.
+
+    Args:
+        use_ollama: If True, use local Ollama. Otherwise use OpenAI GPT-4o.
+    """
+    parser = PydanticOutputParser(pydantic_object=Recipe)
+    llm = _build_llm(use_ollama)
+
+    def extract_from_text(page_text: str) -> Recipe:
+        """Extract recipe data from the text of a web page."""
+        format_instructions = parser.get_format_instructions()
+
+        message = HumanMessage(
+            content=[
+                {
+                    "type": "text",
+                    "text": f"""Du bist ein Experte für das Auslesen von Rezepten aus Webseiten.
+Analysiere den folgenden Seitentext und extrahiere alle Rezeptinformationen so vollständig und präzise wie möglich.
+
+Wichtige Hinweise:
+- Lies alle Zutaten mit Mengenangaben aus
+- Erfasse alle Zubereitungsschritte in der richtigen Reihenfolge
+- Ignoriere Navigation, Werbung, Kommentare und andere seitenfremde Inhalte
+- Falls Informationen nicht erkennbar sind, lasse das Feld leer (None)
+- Behalte die Originalsprache des Rezepts bei
+
+{format_instructions}
+
+Antworte NUR mit dem JSON-Objekt, ohne zusätzlichen Text.
+
+--- SEITENTEXT ---
+{page_text}""",
+                },
+            ]
+        )
+
+        response = llm.invoke([message])
+        return parser.parse(response.content)
+
+    return extract_from_text

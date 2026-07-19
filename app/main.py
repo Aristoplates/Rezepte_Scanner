@@ -15,6 +15,7 @@ from app.chains.recipe_chain import build_recipe_chain
 from app.services.notion_services import NotionService
 from app.models.recipe import Recipe, Ingredient
 from app.utils.image_utils import resize_image, get_image_preview
+from app.utils.url_scraper import extract_recipe_from_url
 
 # --- Page Config ------------------------------------
 st.set_page_config(
@@ -105,7 +106,12 @@ with st.sidebar:
 
     st.divider()
     st.markdown("### LangSmith Tracing")
-    tracing = os.getenv("LANGCHAIN_TRACING_V2", "false") or st.secrets["LANGCHAIN_TRACING_V2", "false"]
+    tracing = os.getenv("LANGCHAIN_TRACING_V2")
+    if not tracing:
+        try:
+            tracing = st.secrets.get("LANGCHAIN_TRACING_V2", "false")
+        except Exception:
+            tracing = "false"
     if tracing == "true":
         st.success("✅ Aktiv")
     else:
@@ -118,43 +124,69 @@ st.markdown("*Rezeptfoto hochladen → KI liest aus → In Notion speichern*")
 
 st.divider()
 
-# Upload
-col1, col2 = st.columns([2, 1])
+# Eingabemethoden: Foto/Kamera oder URL
+tab_foto, tab_url = st.tabs(["📷 Foto / Kamera", "🔗 Von URL"])
 
-with col1:
-    uploaded_file = st.file_uploader(
-        "Rezeptefoto hochladen",
-        type=["jpg", "jpeg", "png", "webp"],
-        help="Foto eines abgedruckten oder handgeschriebenen Rezepts"
+with tab_foto:
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        uploaded_file = st.file_uploader(
+            "Rezeptefoto hochladen",
+            type=["jpg", "jpeg", "png", "webp"],
+            help="Foto eines abgedruckten oder handgeschriebenen Rezepts"
+        )
+
+    with col2:
+        st.markdown("**Oder Kamera nutzen:**")
+        camera_input = st.camera_input("📷 Foto aufnehmen")
+
+    # Determine active image
+    active_image = camera_input or uploaded_file
+    image_bytes = None
+
+    if active_image:
+        image_bytes = active_image.read()
+        preview = get_image_preview(image_bytes)
+        st.image(preview, caption="Hochgeladenes Bild", width=300)
+
+    # --- Extraction (Bild) ----------------------------------------------
+    if image_bytes and st.button("🔍 Rezept auslesen", type="primary", use_container_width=True):
+        with st.spinner("KI analyisiert das Rezeptfoto..."):
+            try:
+                optimized = resize_image(image_bytes)
+                chain = build_recipe_chain(use_ollama=use_ollama)
+                recipe: Recipe = chain(optimized)
+                st.session_state["recipe"] = recipe
+                st.success("✅ Rezept erfolgreich ausgelesen!")
+            except Exception as e:
+                st.error(f"❌ Fehler beim Auslesen: {e}")
+                st.stop()
+
+with tab_url:
+    st.markdown("Rezept direkt aus einer Webseite laden (z. B. Chefkoch, AllRecipes, Food-Blogs).")
+    recipe_url = st.text_input(
+        "Rezept-URL",
+        placeholder="https://www.chefkoch.de/rezepte/...",
+        help="Zuerst wird nach strukturierten Rezeptdaten gesucht, sonst liest die KI den Seitentext aus."
     )
 
-with col2:
-    st.markdown("**Oder Kamera nutzen:")
-    camera_input = st.camera_input("📷 Foto aufnehmen")
-
-# Determine active image
-active_image = camera_input or uploaded_file
-image_bytes = None
-
-if active_image:
-    image_bytes = active_image.read()
-    preview = get_image_preview(image_bytes)
-    st.image(preview, caption="Hochgeladenes Bild", width=300)
+    if st.button("🔗 Rezept von URL laden", type="primary", use_container_width=True):
+        if not recipe_url or not recipe_url.strip().lower().startswith("http"):
+            st.error("❌ Bitte eine gültige URL eingeben (beginnend mit http:// oder https://).")
+        else:
+            with st.spinner("Lade und analysiere die Rezeptseite..."):
+                try:
+                    recipe: Recipe = extract_recipe_from_url(
+                        recipe_url.strip(), use_ollama=use_ollama
+                    )
+                    st.session_state["recipe"] = recipe
+                    st.success("✅ Rezept erfolgreich geladen!")
+                except Exception as e:
+                    st.error(f"❌ Fehler beim Laden der URL: {e}")
+                    st.stop()
 
 st.divider()
-
-# --- Extraction ----------------------------------------------
-if image_bytes and st.button("🔍 Rezept auslesen", type="primary", use_container_width=True):
-    with st.spinner("KI analyisiert das Rezeptfoto..."):
-        try:
-            optimized = resize_image(image_bytes)
-            chain = build_recipe_chain(use_ollama=use_ollama)
-            recipe: Recipe = chain(optimized)
-            st.session_state["recipe"] = recipe
-            st.success("✅ Rezept erfolgreich ausgelesen!")
-        except Exception as e:
-            st.error(f"❌ Fehler beim Auslesen: {e}")
-            st.stop()
 
 # --- Edit & Review -------------------------------------------
 if "recipe" in st.session_state:

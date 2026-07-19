@@ -22,9 +22,9 @@ def resize_image(image_bytes: bytes, max_size: int=2048) -> bytes:
     return buf.getvalue()
 
 
-def get_image_preview(imeage_bytes: bytes, max_size: int = 400) -> bytes:
+def get_image_preview(image_bytes: bytes, max_size: int = 400) -> bytes:
     """Generate a small preview thumbnail"""
-    img = Image.open(io.BytesIO(imeage_bytes))
+    img = Image.open(io.BytesIO(image_bytes))
     if img.mode in ("RGBA", "P"):
         img = img.convert("RGB")
     img.thumbnail((max_size, max_size), Image.LANCZOS)

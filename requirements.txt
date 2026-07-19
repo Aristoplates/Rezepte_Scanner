@@ -14,6 +14,8 @@ attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
+beautifulsoup4==4.15.0
+    # via rezepte-scanner
 blinker==1.9.0
     # via streamlit
 cachetools==7.1.1
@@ -176,6 +178,7 @@ requests==2.33.1
     # via
     #   langsmith
     #   requests-toolbelt
+    #   rezepte-scanner
     #   streamlit
     #   tiktoken
 requests-toolbelt==1.0.0
@@ -190,6 +193,8 @@ smmap==5.0.3
     # via gitdb
 sniffio==1.3.1
     # via openai
+soupsieve==2.9
+    # via beautifulsoup4
 starlette==1.0.0
     # via streamlit
 streamlit==1.57.0
@@ -207,6 +212,7 @@ tqdm==4.67.3
 typing-extensions==4.15.0
     # via
     #   altair
+    #   beautifulsoup4
     #   langchain-core
     #   langchain-protocol
     #   openai
