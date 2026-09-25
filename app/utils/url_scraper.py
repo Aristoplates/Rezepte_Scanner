@@ -19,7 +19,7 @@ _USER_AGENT = (
 )
 
 # Maximale Textlänge, die an das LLM übergeben wird (Token-Kosten begrenzen).
-_MAX_TEXT_CHARS = 8000
+_MAX_TEXT_CHARS = 16000
 
 
 def fetch_html(url: str) -> str:
